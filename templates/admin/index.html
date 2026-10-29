@@ -1,0 +1,366 @@
+{% extends "admin/base_site.html" %}
+{% load i18n static %}
+
+{% block content %}
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet">
+
+<!-- Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<style>
+    .font-sans { font-family: 'Inter', sans-serif; }
+    .font-mono { font-family: 'JetBrains Mono', monospace; }
+</style>
+
+<!-- Full Width Layout -->
+<div class="w-full p-6 lg:p-8 font-sans bg-gray-50/50 dark:bg-gray-950 min-h-screen">
+
+    <!-- Dashboard Header -->
+    <div class="mb-8 flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+            <h1 class="text-2xl font-bold tracking-tight text-gray-900 dark:text-white">Analytics Dashboard</h1>
+            <p class="text-sm text-gray-500 dark:text-gray-400">Real-time overview of library metrics and circulation.</p>
+        </div>
+        <div class="flex items-center gap-3">
+            <span class="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-semibold text-emerald-700 ring-1 ring-emerald-200 dark:bg-emerald-950/30 dark:text-emerald-400 dark:ring-emerald-900">
+                <span class="relative flex h-1.5 w-1.5">
+                    <span class="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75"></span>
+                    <span class="relative inline-flex h-1.5 w-1.5 rounded-full bg-emerald-500"></span>
+                </span>
+                Live Data
+            </span>
+            <span class="text-xs font-medium text-gray-400">{% now "F j, Y · H:i" %}</span>
+        </div>
+    </div>
+
+    <!-- ============ GRAPHS SECTION ============ -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+        
+        <!-- Doughnut Chart: Circulation Status -->
+        <div class="rounded-xl border border-gray-200 bg-white p-5 shadow-sm dark:border-gray-800 dark:bg-gray-900">
+            <div class="mb-4 flex items-center justify-between">
+                <h2 class="text-sm font-bold uppercase tracking-wider text-gray-600 dark:text-gray-400">Circulation Status</h2>
+            </div>
+            <div class="relative h-64 w-full">
+                <canvas id="statusChart"></canvas>
+            </div>
+        </div>
+
+        <!-- Bar Chart: Books per Department -->
+        <div class="rounded-xl border border-gray-200 bg-white p-5 shadow-sm dark:border-gray-800 dark:bg-gray-900">
+            <div class="mb-4 flex items-center justify-between">
+                <h2 class="text-sm font-bold uppercase tracking-wider text-gray-600 dark:text-gray-400">Books per Dept</h2>
+            </div>
+            <div class="relative h-64 w-full">
+                <canvas id="booksDeptChart"></canvas>
+            </div>
+        </div>
+
+        <!-- Bar Chart: Students per Department -->
+        <div class="rounded-xl border border-gray-200 bg-white p-5 shadow-sm dark:border-gray-800 dark:bg-gray-900">
+            <div class="mb-4 flex items-center justify-between">
+                <h2 class="text-sm font-bold uppercase tracking-wider text-gray-600 dark:text-gray-400">Students per Dept</h2>
+            </div>
+            <div class="relative h-64 w-full">
+                <canvas id="studentsDeptChart"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- ============ DATA TABLES ============ -->
+    <div class="space-y-8">
+
+        <!-- System Overview Table -->
+        <div class="rounded-xl border border-gray-200 bg-white shadow-sm dark:border-gray-800 dark:bg-gray-900 overflow-hidden">
+            <div class="border-b border-gray-200 px-6 py-4 dark:border-gray-800">
+                <h2 class="text-base font-bold text-gray-900 dark:text-white">System Overview</h2>
+            </div>
+            <div class="overflow-x-auto">
+                <table class="w-full text-sm text-left">
+                    <thead class="bg-gray-50 text-xs uppercase tracking-wider text-gray-500 dark:bg-gray-800/50 dark:text-gray-400">
+                        <tr>
+                            <th class="px-6 py-3 font-semibold">Category</th>
+                            <th class="px-6 py-3 font-semibold text-center">Total Count</th>
+                            <th class="px-6 py-3 font-semibold">Category</th>
+                            <th class="px-6 py-3 font-semibold text-center">Total Count</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-100 dark:divide-gray-800">
+                        <tr class="hover:bg-gray-50/50 dark:hover:bg-gray-800/50">
+                            <td class="px-6 py-3 text-gray-800 dark:text-gray-200">Books</td>
+                            <td class="px-6 py-3 text-center font-bold text-gray-900 dark:text-gray-100">{{ counts.books|default:0 }}</td>
+                            <td class="px-6 py-3 text-gray-800 dark:text-gray-200">Departments</td>
+                            <td class="px-6 py-3 text-center font-bold text-gray-900 dark:text-gray-100">{{ counts.departments|default:0 }}</td>
+                        </tr>
+                        <tr class="hover:bg-gray-50/50 dark:hover:bg-gray-800/50">
+                            <td class="px-6 py-3 text-gray-800 dark:text-gray-200">Students</td>
+                            <td class="px-6 py-3 text-center font-bold text-gray-900 dark:text-gray-100">{{ counts.students|default:0 }}</td>
+                            <td class="px-6 py-3 text-gray-800 dark:text-gray-200">Programs</td>
+                            <td class="px-6 py-3 text-center font-bold text-gray-900 dark:text-gray-100">{{ counts.programs|default:0 }}</td>
+                        </tr>
+                        <tr class="hover:bg-gray-50/50 dark:hover:bg-gray-800/50">
+                            <td class="px-6 py-3 text-gray-800 dark:text-gray-200">Transactions</td>
+                            <td class="px-6 py-3 text-center font-bold text-gray-900 dark:text-gray-100">{{ counts.transactions|default:0 }}</td>
+                            <td class="px-6 py-3 text-gray-800 dark:text-gray-200">Reports</td>
+                            <td class="px-6 py-3 text-center font-bold text-gray-900 dark:text-gray-100">{{ counts.reports|default:0 }}</td>
+                        </tr>
+                        <tr class="hover:bg-gray-50/50 dark:hover:bg-gray-800/50">
+                            <td class="px-6 py-3 text-gray-800 dark:text-gray-200">Collections</td>
+                            <td class="px-6 py-3 text-center font-bold text-gray-900 dark:text-gray-100">{{ counts.collections|default:0 }}</td>
+                            <td class="px-6 py-3 text-gray-800 dark:text-gray-200">Users</td>
+                            <td class="px-6 py-3 text-center font-bold text-gray-900 dark:text-gray-100">{{ counts.users|default:0 }}</td>
+                        </tr>
+                        <tr class="hover:bg-gray-50/50 dark:hover:bg-gray-800/50">
+                            <td class="px-6 py-3 text-gray-800 dark:text-gray-200">Sections</td>
+                            <td class="px-6 py-3 text-center font-bold text-gray-900 dark:text-gray-100">{{ counts.sections|default:0 }}</td>
+                            <td class="px-6 py-3 text-gray-800 dark:text-gray-200">Detail Rows</td>
+                            <td class="px-6 py-3 text-center font-bold text-gray-900 dark:text-gray-100">{{ counts.transaction_details|default:0 }}</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Two Column Layout for remaining tables -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            
+            <!-- Books per Collection -->
+            <div class="rounded-xl border border-gray-200 bg-white shadow-sm dark:border-gray-800 dark:bg-gray-900 overflow-hidden">
+                <div class="border-b border-gray-200 px-6 py-4 dark:border-gray-800">
+                    <h2 class="text-base font-bold text-gray-900 dark:text-white">Books per Collection</h2>
+                </div>
+                <table class="w-full text-sm text-left">
+                    <thead class="bg-gray-50 text-xs uppercase tracking-wider text-gray-500 dark:bg-gray-800/50 dark:text-gray-400">
+                        <tr>
+                            <th class="px-6 py-3 font-semibold">Collection</th>
+                            <th class="px-6 py-3 font-semibold text-right">Count</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-100 dark:divide-gray-800">
+                        {% for c in books_per_collection %}
+                        <tr class="hover:bg-gray-50/50 dark:hover:bg-gray-800/50">
+                            <td class="px-6 py-3 text-gray-800 dark:text-gray-200">{{ c.description }}</td>
+                            <td class="px-6 py-3 text-right font-bold text-gray-900 dark:text-gray-100">{{ c.book_count }}</td>
+                        </tr>
+                        {% empty %}
+                        <tr><td colspan="2" class="px-6 py-4 text-center text-gray-500">No data</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Most Borrowed Books -->
+            <div class="rounded-xl border border-gray-200 bg-white shadow-sm dark:border-gray-800 dark:bg-gray-900 overflow-hidden">
+                <div class="border-b border-gray-200 px-6 py-4 dark:border-gray-800">
+                    <h2 class="text-base font-bold text-gray-900 dark:text-white">Most Borrowed Books</h2>
+                </div>
+                <table class="w-full text-sm text-left">
+                    <thead class="bg-gray-50 text-xs uppercase tracking-wider text-gray-500 dark:bg-gray-800/50 dark:text-gray-400">
+                        <tr>
+                            <th class="px-6 py-3 font-semibold">Title</th>
+                            <th class="px-6 py-3 font-semibold text-right">Loans</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-100 dark:divide-gray-800">
+                        {% for b in top_books %}
+                        <tr class="hover:bg-gray-50/50 dark:hover:bg-gray-800/50">
+                            <td class="px-6 py-3 text-gray-800 dark:text-gray-200">{{ b.title|default:b.title_statement|truncatechars:50 }}</td>
+                            <td class="px-6 py-3 text-right font-bold text-gray-900 dark:text-gray-100">{{ b.borrow_count }}</td>
+                        </tr>
+                        {% empty %}
+                        <tr><td colspan="2" class="px-6 py-4 text-center text-gray-500">No loans yet</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Recent Transactions -->
+        <div class="rounded-xl border border-gray-200 bg-white shadow-sm dark:border-gray-800 dark:bg-gray-900 overflow-hidden">
+            <div class="border-b border-gray-200 px-6 py-4 dark:border-gray-800">
+                <h2 class="text-base font-bold text-gray-900 dark:text-white">Recent Transactions</h2>
+            </div>
+            <div class="overflow-x-auto">
+                <table class="w-full text-sm text-left">
+                    <thead class="bg-gray-50 text-xs uppercase tracking-wider text-gray-500 dark:bg-gray-800/50 dark:text-gray-400">
+                        <tr>
+                            <th class="px-6 py-3 font-semibold">Code</th>
+                            <th class="px-6 py-3 font-semibold">Student</th>
+                            <th class="px-6 py-3 font-semibold">Description</th>
+                            <th class="px-6 py-3 font-semibold text-right">Date</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-100 dark:divide-gray-800">
+                        {% for t in recent_transactions %}
+                        <tr class="hover:bg-gray-50/50 dark:hover:bg-gray-800/50">
+                            <td class="px-6 py-3 font-mono text-xs font-medium text-brand-700 dark:text-brand-400">{{ t.transaction_code }}</td>
+                            <td class="px-6 py-3 text-gray-800 dark:text-gray-200">{{ t.student.full_name }}</td>
+                            <td class="px-6 py-3 text-gray-600 dark:text-gray-400">{{ t.description|default:"—"|truncatechars:40 }}</td>
+                            <td class="px-6 py-3 text-right text-gray-600 dark:text-gray-400">{{ t.created_at|date:"M d, Y H:i" }}</td>
+                        </tr>
+                        {% empty %}
+                        <tr><td colspan="4" class="px-6 py-4 text-center text-gray-500">No transactions yet</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Footer -->
+    <div class="mt-8 flex flex-col items-center justify-between gap-2 border-t border-gray-200 pt-6 text-xs text-gray-400 sm:flex-row dark:border-gray-800">
+        <span>Generated by MOIST Library System</span>
+        <div class="flex items-center gap-4">
+            <button onclick="window.print()" class="font-medium hover:text-gray-600 dark:hover:text-gray-300 transition no-print">
+                Print Report
+            </button>
+        </div>
+    </div>
+
+</div>
+
+<!-- ============ CHART.JS SCRIPT ============ -->
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Helper to detect dark mode based on the HTML class
+        const isDarkMode = document.documentElement.classList.contains('dark');
+        const textColor = isDarkMode ? '#9ca3af' : '#4b5563'; // gray-400 or gray-600
+        const gridColor = isDarkMode ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)';
+
+        // 1. Circulation Status Chart (Doughnut)
+        const statusCtx = document.getElementById('statusChart').getContext('2d');
+        new Chart(statusCtx, {
+            type: 'doughnut',
+            data: {
+                labels: ['Returned', 'Borrowed', 'Reserved', 'Lost'],
+                datasets: [{
+                    data: [
+                        {{ status_map.returned|default:0 }},
+                        {{ status_map.borrowed|default:0 }},
+                        {{ status_map.reserved|default:0 }},
+                        {{ status_map.lost|default:0 }}
+                    ],
+                    backgroundColor: ['#10b981', '#f43f5e', '#f59e0b', '#64748b'],
+                    borderWidth: 0,
+                    hoverOffset: 4
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        labels: { color: textColor, font: { family: 'Inter', size: 11 }, padding: 16 }
+                    }
+                },
+                cutout: '75%'
+            }
+        });
+
+        // 2. Books per Department Chart (Bar)
+        const booksDeptCtx = document.getElementById('booksDeptChart').getContext('2d');
+        new Chart(booksDeptCtx, {
+            type: 'bar',
+            data: {
+                labels: [{% for d in books_per_department %}'{{ d.abbreviation }}',{% endfor %}],
+                datasets: [{
+                    label: 'Books',
+                    data: [{% for d in books_per_department %}{{ d.book_count }},{% endfor %}],
+                    backgroundColor: '#3b82f6', // Blue
+                    borderRadius: 4,
+                    maxBarThickness: 32
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { display: false } },
+                scales: {
+                    y: { beginAtZero: true, ticks: { color: textColor }, grid: { color: gridColor, drawBorder: false } },
+                    x: { ticks: { color: textColor }, grid: { display: false } }
+                }
+            }
+        });
+
+        // 3. Students per Department Chart (Bar)
+        const studentsDeptCtx = document.getElementById('studentsDeptChart').getContext('2d');
+        new Chart(studentsDeptCtx, {
+            type: 'bar',
+            data: {
+                labels: [{% for d in students_per_department %}'{{ d.abbreviation }}',{% endfor %}],
+                datasets: [{
+                    label: 'Students',
+                    data: [{% for d in students_per_department %}{{ d.student_count }},{% endfor %}],
+                    backgroundColor: '#8b5cf6', // Violet
+                    borderRadius: 4,
+                    maxBarThickness: 32
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { display: false } },
+                scales: {
+                    y: { beginAtZero: true, ticks: { color: textColor }, grid: { color: gridColor, drawBorder: false } },
+                    x: { ticks: { color: textColor }, grid: { display: false } }
+                }
+            }
+        });
+    });
+</script>
+
+<!-- ============ PRINT STYLES ============ -->
+<style>
+    @media print {
+        /* Hide charts and buttons when printing to save ink */
+        #statusChart, #booksDeptChart, #studentsDeptChart, .no-print {
+            display: none !important;
+        }
+
+        body {
+            background: white !important;
+            color: black !important;
+            margin: 0 !important;
+            padding: 0 !important;
+        }
+
+        .w-full {
+            max-width: 100% !important;
+            padding: 0 !important;
+        }
+
+        /* Force clean borders for tables */
+        .rounded-xl {
+            border: 1px solid #000 !important;
+            border-radius: 0 !important;
+            box-shadow: none !important;
+            margin-bottom: 20px !important;
+        }
+
+        table {
+            font-size: 10pt !important;
+            border-collapse: collapse !important;
+            width: 100% !important;
+        }
+        th, td {
+            padding: 6px 8px !important;
+            border: 1px solid #000 !important;
+        }
+        
+        thead {
+            display: table-header-group;
+        }
+        tr {
+            page-break-inside: avoid;
+        }
+        
+        .bg-gray-50, .bg-gray-800, .bg-gray-900, .bg-gray-100, .bg-gray-50\/50 {
+            background-color: transparent !important;
+        }
+    }
+</style>
+{% endblock %}

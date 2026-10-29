@@ -1,0 +1,306 @@
+{% extends "admin/base_site.html" %}
+{% load i18n static %}
+
+{% block content %}
+<!-- Custom Fonts for Professional Look -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,600;0,700;1,600&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+<style>
+    .font-display { font-family: 'Playfair Display', serif; }
+    .font-sans { font-family: 'Inter', sans-serif; }
+</style>
+
+<div class="mx-auto max-w-5xl p-6 font-sans">
+
+    <!-- Top Navigation (Just the Back link) -->
+    <div class="mb-6 flex items-center no-print">
+        <a href="{% url 'admin:compliance_report_changelist' %}"
+           class="inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold text-gray-500 transition hover:bg-gray-100 hover:text-brand-700 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-brand-400">
+            <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18" />
+            </svg>
+            Back to Reports
+        </a>
+    </div>
+    
+    <!-- ============ REPORT DOCUMENT ============ -->
+    <div id="report-document" class="rounded-xl border border-gray-200 bg-white shadow-xl dark:border-gray-800 dark:bg-gray-900 overflow-hidden">
+
+        <!-- ============ HEADER ============ -->
+        <header class="relative px-10 pt-8 pb-6 text-center">
+            
+            <div class="flex flex-col items-center justify-center gap-3">
+                <!-- Logo -->
+                <img src="{% static 'img/logo.png' %}"
+                     alt="MOIST Library Logo"
+                     class="h-16 w-16 flex-shrink-0 object-contain drop-shadow-sm" />
+
+                <!-- Org name & office -->
+                <div>
+                    <div class="font-display text-xl font-bold tracking-tight text-gray-900 dark:text-gray-100">
+                        MISAMIS ORIENTAL INSTITUTE OF SCIENCE AND TECHNOLOGY, Inc.
+                    </div>
+                    <div class="mt-0.5 text-[11px] font-semibold uppercase tracking-[0.2em] text-gray-500 dark:text-gray-400">
+                        Library Management Office
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tightened Divider -->
+            <div class="mx-auto mt-4 flex items-center justify-center gap-4">
+                <div class="h-px w-16 bg-gray-300 dark:bg-gray-700"></div>
+                <div class="h-1.5 w-1.5 rounded-full bg-brand-700 dark:bg-brand-500"></div>
+                <div class="h-px w-16 bg-gray-300 dark:bg-gray-700"></div>
+            </div>
+
+            <!-- Report title block -->
+            <div class="mt-4">
+                <h1 class="font-display text-3xl font-bold text-gray-900 dark:text-gray-100">
+                    Library Book Holdings 2026
+                </h1>
+                
+                <!-- Course Code & Description -->
+                <div class="mt-3 inline-flex items-center gap-2 rounded-full border border-gray-200 bg-gray-50 px-4 py-1 text-xs font-bold uppercase tracking-wider text-gray-700 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300">
+                    <span class="text-brand-700 dark:text-brand-400">Course:</span>
+                    <span class="font-mono">{{ obj.program.abbreviation|default:"BSIT" }}</span>
+                    <span class="text-gray-300 dark:text-gray-600">|</span>
+                    <span>{{ obj.program.description|default:"Information Technology" }}</span>
+                </div>
+            </div>
+        </header>
+
+        <!-- ============ BODY ============ -->
+        <section class="px-10 pt-2 pb-8">
+            {% if subjects %}
+            <!-- Professional Data Table -->
+            <div class="overflow-hidden rounded-lg border border-gray-200 dark:border-gray-700">
+                <table class="w-full text-sm border-collapse">
+                    <thead>
+                        <tr class="bg-gray-50 text-left text-xs uppercase tracking-wider text-gray-600 dark:bg-gray-800 dark:text-gray-400 border-b border-gray-200 dark:border-gray-700">
+                            <th class="px-5 py-3 font-bold border-r border-gray-200 dark:border-gray-700">Subject</th>
+                            <th class="px-5 py-3 font-bold border-r border-gray-200 dark:border-gray-700">Book Title</th>
+                            <th class="px-5 py-3 font-bold border-r border-gray-200 dark:border-gray-700">Author</th>
+                            <th class="px-5 py-3 font-bold border-r border-gray-200 dark:border-gray-700">Publishing</th>
+                            <th class="px-5 py-3 font-bold border-r border-gray-200 dark:border-gray-700">Year</th>
+                            <th class="px-5 py-3 font-bold text-center">Copies</th>
+                        </tr>
+                    </thead>
+                    <tbody class="bg-white divide-y divide-gray-200 dark:bg-gray-900 dark:divide-gray-700">
+                        {% for cs in subjects %}
+                            {% if cs.books.all %}
+                                {% for book in cs.books.all %}
+                                <tr class="hover:bg-gray-50/50 dark:hover:bg-gray-800/50 transition">
+                                    {% if forloop.first %}
+                                    <td rowspan="{{ cs.books.count }}"
+                                        class="whitespace-nowrap border-r border-gray-200 px-5 py-3 align-top dark:border-gray-700 bg-gray-50/30 dark:bg-gray-800/30">
+                                        <div class="font-bold text-gray-900 dark:text-gray-100 text-base">
+                                            {{ cs.subject.code }}
+                                        </div>
+                                        {% if cs.subject.title %}
+                                        <div class="mt-1 max-w-[220px] text-xs leading-relaxed text-gray-500 dark:text-gray-400">
+                                            {{ cs.subject.title }}
+                                        </div>
+                                        {% endif %}
+                                    </td>
+                                    {% endif %}
+
+                                    <td class="px-5 py-3 border-r border-gray-200 text-gray-800 font-medium dark:border-gray-700 dark:text-gray-200">
+                                        {{ book.title|default:book.title_statement }}
+                                    </td>
+                                    <td class="px-5 py-3 border-r border-gray-200 text-gray-600 dark:border-gray-700 dark:text-gray-400">
+                                        {{ book.title_author|default:"—" }}
+                                    </td>
+                                    <td class="px-5 py-3 border-r border-gray-200 text-gray-600 dark:border-gray-700 dark:text-gray-400">
+                                        {{ book.publisher|default:"—" }}
+                                    </td>
+                                    <td class="px-5 py-3 border-r border-gray-200 text-gray-600 dark:border-gray-700 dark:text-gray-400">
+                                        {{ book.pub_year|default:"—" }}
+                                    </td>
+                                    <td class="px-5 py-3 text-center font-bold text-brand-700 dark:text-brand-400">
+                                        {{ book.copy_number|default:"1" }}
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            {% else %}
+                                <tr class="hover:bg-gray-50/50 dark:hover:bg-gray-800/50 transition">
+                                    <td class="whitespace-nowrap px-5 py-3 border-r border-gray-200 align-top dark:border-gray-700 bg-gray-50/30 dark:bg-gray-800/30">
+                                        <div class="font-bold text-gray-900 dark:text-gray-100 text-base">
+                                            {{ cs.subject.code }}
+                                        </div>
+                                        {% if cs.subject.title %}
+                                        <div class="mt-1 max-w-[220px] text-xs text-gray-500 dark:text-gray-400">
+                                            {{ cs.subject.title }}
+                                        </div>
+                                        {% endif %}
+                                    </td>
+                                    <td colspan="5" class="px-5 py-3 text-sm italic text-gray-400 dark:text-gray-500">
+                                        No books assigned
+                                    </td>
+                                </tr>
+                            {% endif %}
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="rounded-lg border border-dashed border-gray-300 bg-gray-50 px-6 py-16 text-center dark:border-gray-700 dark:bg-gray-800/30">
+                <p class="text-sm text-gray-500 dark:text-gray-400">
+                    No curriculum subjects available.
+                </p>
+            </div>
+            {% endif %}
+
+            <!-- Certification statement -->
+            <p class="mt-6 text-xs leading-loose text-gray-500 dark:text-gray-400 border-l-2 border-brand-700 pl-4">
+                This report is generated by the MOIST Library System for compliance and audit purposes.
+                The information contained herein reflects the current state of the library catalog
+                and curriculum records as of the generation date. Any discrepancies should be reported
+                to the Library Management Office.
+            </p>
+        </section>
+
+        <!-- ============ FOOTER ============ -->
+        <footer class="border-t border-gray-200 bg-gray-50 px-10 pt-6 pb-6 dark:border-gray-800 dark:bg-gray-800/50">
+            <!-- Signature block -->
+            <div class="grid grid-cols-1 gap-8 sm:grid-cols-2">
+                <div>
+                    <div class="text-[10px] font-bold uppercase tracking-widest text-gray-400 dark:text-gray-500">
+                        Prepared by
+                    </div>
+                    <div class="mt-10 border-t border-gray-300 pt-2 dark:border-gray-600">
+                        <div class="text-sm font-bold text-gray-900 dark:text-gray-100">
+                            {{ request.user.get_full_name|default:request.user.username }}
+                        </div>
+                        <div class="text-xs font-medium text-gray-500 dark:text-gray-400 mt-0.5">
+                            Library Staff
+                        </div>
+                    </div>
+                </div>
+                <div>
+                    <div class="text-[10px] font-bold uppercase tracking-widest text-gray-400 dark:text-gray-500">
+                        Approved by
+                    </div>
+                    <div class="mt-10 border-t border-gray-300 pt-2 dark:border-gray-600">
+                        <div class="text-sm font-bold text-gray-900 dark:text-gray-100">
+                            ___________________________
+                        </div>
+                        <div class="text-xs font-medium text-gray-500 dark:text-gray-400 mt-0.5">
+                            Library Director
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- System line -->
+            <div class="mt-8 flex flex-col items-center justify-between gap-2 border-t border-gray-200 pt-4 text-[10px] font-medium tracking-wide text-gray-400 dark:border-gray-700 sm:flex-row dark:text-gray-500">
+                <span>Generated by MOIST Library System &middot; RPT-{{ obj.pk|stringformat:"05d" }}</span>
+                <span>Page 1 of 1</span>
+            </div>
+        </footer>
+
+    </div>
+    <!-- ============ END REPORT DOCUMENT ============ -->
+
+    <!-- Bottom Print Action (Visible on screen, hidden on print) -->
+    <div class="mt-8 flex justify-center no-print">
+        <button onclick="window.print()"
+                class="inline-flex items-center gap-2 rounded-xl bg-brand-700 px-8 py-3.5 text-sm font-bold text-white shadow-md shadow-brand-700/20 transition hover:bg-brand-800 hover:shadow-lg hover:shadow-brand-700/30 focus:outline-none focus:ring-4 focus:ring-brand-700/30 dark:bg-brand-600 dark:hover:bg-brand-500">
+            <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M6.72 13.829c-.24.03-.48.062-.72.096m.72-.096a42.415 42.415 0 0110.56 0m-10.56 0L6.34 18m10.94-4.171c.24.03.48.062.72.096m-.72-.096L17.66 18m0 0l.229 2.523a1.125 1.125 0 01-1.12 1.227H7.231c-.662 0-1.18-.568-1.12-1.227L6.34 18m11.318 0h1.091A2.25 2.25 0 0021 15.75V9.456c0-1.081-.768-2.015-1.837-2.175a48.055 48.055 0 00-1.913-.247M6.34 18H5.25A2.25 2.25 0 013 15.75V9.456c0-1.081.768-2.015 1.837-2.175a48.041 48.041 0 011.913-.247m10.5 0a48.536 48.536 0 00-10.5 0m10.5 0V3.375c0-.621-.504-1.125-1.125-1.125h-8.25c-.621 0-1.125.504-1.125 1.125v3.659M18 10.5h.008v.008H18V10.5zm-3 0h.008v.008H15V10.5z" />
+            </svg>
+            Print Document
+        </button>
+    </div>
+
+</div>
+
+<!-- ============ PRINT STYLES ============ -->
+<style>
+    @media print {
+        /* 1. Hide everything on the page by default */
+        body * {
+            visibility: hidden;
+        }
+
+        /* 2. Make ONLY the report document and its children visible */
+        #report-document, #report-document * {
+            visibility: visible;
+        }
+
+        /* 3. Make the document span the full page and remove margins */
+        #report-document {
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 100%;
+            border: none !important;
+            box-shadow: none !important;
+            padding: 0 !important;
+            margin: 0 !important;
+        }
+
+        /* 4. Reset backgrounds and colors for ink-saving */
+        body {
+            background: white !important;
+            color: black !important;
+            margin: 0 !important;
+            padding: 0 !important;
+        }
+
+        /* 5. Compact the Print Layout */
+        @page {
+            margin: 0.5cm; /* Reduces default browser print margins */
+        }
+
+        /* Reduce the header padding */
+        header {
+            padding-top: 0.5rem !important;
+            padding-bottom: 0.5rem !important;
+        }
+        
+        /* Reduce gaps around the title and divider */
+        .mt-4, .mt-3 { margin-top: 0.5rem !important; }
+        .mt-6 { margin-top: 1rem !important; }
+
+        /* Shrink the main title */
+        h1.font-display {
+            font-size: 18pt !important;
+            margin-top: 0.5rem !important;
+        }
+
+        /* FIX: FORCE VISIBLE TABLE BORDERS */
+        table {
+            font-size: 9pt !important;
+            border-collapse: collapse !important;
+            width: 100% !important;
+        }
+        th, td {
+            padding: 4px 8px !important;
+            border: 1px solid #000 !important; /* Force black borders */
+        }
+        /* Force row borders to show up in webkit browsers */
+        tr {
+            border-bottom: 1px solid #000 !important;
+        }
+        
+        /* Shrink the signature block spacing */
+        .mt-10 { margin-top: 1.5rem !important; }
+        
+        /* Keep table rows together */
+        thead {
+            display: table-header-group;
+        }
+        tr {
+            page-break-inside: avoid;
+        }
+        img {
+            max-height: 50px !important;
+        }
+        .bg-gray-50, .bg-gray-800, .bg-gray-900 {
+            background-color: transparent !important;
+        }
+    }
+</style>
+{% endblock %}
