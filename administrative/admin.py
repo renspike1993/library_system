@@ -330,3 +330,5 @@ class CurriculumSubjectAdmin(ModelAdmin, ImportExportModelAdmin):
             "</a>",
             url,
         )
+
+
